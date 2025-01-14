@@ -1,0 +1,48 @@
+server:
+  port: 8081
+
+camunda:
+  bpm:
+    job-execution:
+      enabled: true
+    admin-user:
+      id: test
+      password: test123
+    database:
+      schema-update: true
+#      schema-name: public
+      type: h2
+      jdbc-batch-processing: false
+      jdbc-batch-processing-size: 10
+    history-level: full
+    filter:
+      create: All
+    metrics:
+      enabled: true
+    webapp:
+      index-redirect-enabled: true
+      application-path: /camunda
+    generic-properties:
+      properties:
+        historyTimeToLive: 5
+
+spring:
+  datasource:
+    url: "jdbc:h2:file:./camunda-h2-database"
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: myGroup
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    topic:
+      name: myTopic
+
+logging:
+  level:
+    org.springframework.kafka: DEBUG

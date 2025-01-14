@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_03ls19v" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.25.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:process id="Process_1cdkvje" name="RPD_Onbording_Kafka_Impl" isExecutable="true">
+    <bpmn:endEvent id="Event_1lpv05h">
+      <bpmn:incoming>Flow_0o8dmnh</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="Event_1lwcifr">
+      <bpmn:outgoing>Flow_00bvjol</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0o8dmnh" sourceRef="Activity_1kij59d" targetRef="Event_1lpv05h" />
+    <bpmn:serviceTask id="Activity_1uf618p" name="Initialize RPD List" camunda:delegateExpression="${rpdInitializeDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:outputParameter name="temp">
+            <camunda:script scriptFormat="javascript">print('initialized the subject list ::: '+ rpdList);</camunda:script>
+          </camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_00bvjol</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dml06k</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1dml06k" sourceRef="Activity_1uf618p" targetRef="Activity_1kij59d" />
+    <bpmn:sequenceFlow id="Flow_00bvjol" sourceRef="Event_1lwcifr" targetRef="Activity_1uf618p" />
+    <bpmn:subProcess id="Activity_1kij59d" name="Process each RPD">
+      <bpmn:incoming>Flow_1dml06k</bpmn:incoming>
+      <bpmn:outgoing>Flow_0o8dmnh</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="rpdList" camunda:elementVariable="rpdMap">
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">${rpdList.size()}</bpmn:loopCardinality>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_0c61m7e">
+        <bpmn:outgoing>Flow_02b0frc</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_02b0frc" sourceRef="Event_0c61m7e" targetRef="Activity_19kztqo" />
+      <bpmn:serviceTask id="Activity_19kztqo" name="Apply Intended Config to VCMTS" camunda:delegateExpression="${applyConfigToVCMTSDelegate}">
+        <bpmn:incoming>Flow_02b0frc</bpmn:incoming>
+        <bpmn:outgoing>Flow_0027fom</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="Event_1cpby2a">
+        <bpmn:incoming>Flow_10ufl58</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:serviceTask id="Activity_12gyya8" name="Update Job with sucess" camunda:delegateExpression="${updateJobWithSucess}">
+        <bpmn:extensionElements />
+        <bpmn:incoming>Flow_1xwjm8a</bpmn:incoming>
+        <bpmn:outgoing>Flow_10ufl58</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:intermediateCatchEvent id="Activity_0e4g70z" name="wait for response &#10;message">
+        <bpmn:extensionElements>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="compositeID">${compositeID}</camunda:inputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0027fom</bpmn:incoming>
+        <bpmn:outgoing>Flow_1xwjm8a</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_0bqq4lx" messageRef="Message_Response" />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="Flow_10ufl58" sourceRef="Activity_12gyya8" targetRef="Event_1cpby2a" />
+      <bpmn:sequenceFlow id="Flow_1xwjm8a" sourceRef="Activity_0e4g70z" targetRef="Activity_12gyya8" />
+      <bpmn:sequenceFlow id="Flow_0027fom" sourceRef="Activity_19kztqo" targetRef="Activity_0e4g70z" />
+    </bpmn:subProcess>
+  </bpmn:process>
+  <bpmn:message id="Message_Response" name="${compositeID}" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1cdkvje">
+      <bpmndi:BPMNShape id="Event_1lpv05h_di" bpmnElement="Event_1lpv05h">
+        <dc:Bounds x="782" y="112" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="Event_1lwcifr">
+        <dc:Bounds x="232" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1f4g4do_di" bpmnElement="Activity_1uf618p">
+        <dc:Bounds x="330" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kij59d_di" bpmnElement="Activity_1kij59d">
+        <dc:Bounds x="520" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0o8dmnh_di" bpmnElement="Flow_0o8dmnh">
+        <di:waypoint x="620" y="120" />
+        <di:waypoint x="701" y="120" />
+        <di:waypoint x="701" y="130" />
+        <di:waypoint x="782" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dml06k_di" bpmnElement="Flow_1dml06k">
+        <di:waypoint x="430" y="120" />
+        <di:waypoint x="520" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00bvjol_di" bpmnElement="Flow_00bvjol">
+        <di:waypoint x="268" y="120" />
+        <di:waypoint x="330" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_158m3v2">
+    <bpmndi:BPMNPlane id="BPMNPlane_0afjcsh" bpmnElement="Activity_1kij59d">
+      <bpmndi:BPMNShape id="Event_0c61m7e_di" bpmnElement="Event_0c61m7e">
+        <dc:Bounds x="180" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1sv5qtp_di" bpmnElement="Activity_19kztqo">
+        <dc:Bounds x="278" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1cpby2a_di" bpmnElement="Event_1cpby2a">
+        <dc:Bounds x="862" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qli7pc_di" bpmnElement="Activity_12gyya8">
+        <dc:Bounds x="720" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1yimueb_di" bpmnElement="Activity_0e4g70z">
+        <dc:Bounds x="500" y="100" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="508" y="76" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_02b0frc_di" bpmnElement="Flow_02b0frc">
+        <di:waypoint x="216" y="140" />
+        <di:waypoint x="278" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10ufl58_di" bpmnElement="Flow_10ufl58">
+        <di:waypoint x="820" y="140" />
+        <di:waypoint x="862" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xwjm8a_di" bpmnElement="Flow_1xwjm8a">
+        <di:waypoint x="600" y="140" />
+        <di:waypoint x="720" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0027fom_di" bpmnElement="Flow_0027fom">
+        <di:waypoint x="378" y="140" />
+        <di:waypoint x="500" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
