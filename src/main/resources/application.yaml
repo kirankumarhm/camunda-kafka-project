@@ -1,20 +1,22 @@
 server:
-  port: 8081
+  port: 8090
 
 camunda:
   bpm:
-    job-execution:
-      enabled: true
     admin-user:
       id: test
       password: test123
+    job-execution:
+      enabled: true
+      deployment-aware: true
     database:
       schema-update: true
-#      schema-name: public
-      type: h2
-      jdbc-batch-processing: false
+      # schema-name: camunda
+      # table-prefix: camunda.
+      type: postgres
+      jdbc-batch-processing: true
       jdbc-batch-processing-size: 10
-    history-level: full
+    history-level: activity
     filter:
       create: All
     metrics:
@@ -25,10 +27,45 @@ camunda:
     generic-properties:
       properties:
         historyTimeToLive: 5
+    authorization:
+      enabled: true
+# spring:
+#   datasource:
+#     url: "jdbc:h2:file:./camunda-h2-database"
+#     username: sa
+#     password: ""
+#     driver-class-name: org.h2.Driver
+#     initialization-mode: always
+#   jpa:
+#     database-platform: org.hibernate.dialect.H2Dialect
+#     hibernate:
+#       ddl-auto: update
+#     properties:
+#       hibernate:
+#         show_sql: true
+#         format_sql: true
+#         use_sql_comments: true
+#         dialect: org.hibernate.dialect.H2Dialect
 
 spring:
   datasource:
-    url: "jdbc:h2:file:./camunda-h2-database"
+    url: "jdbc:postgresql://postgres:5433/camunda"
+    username: postgres
+    password: "password"
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 2000000
+      maximum-pool-size: 10  
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -43,6 +80,10 @@ spring:
     topic:
       name: myTopic
 
+  data:
+    redis:
+      host: redis
+      port: 6379
 logging:
   level:
     org.springframework.kafka: DEBUG

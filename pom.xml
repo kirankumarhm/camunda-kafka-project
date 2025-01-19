@@ -10,8 +10,27 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<camunda.version>7.21.0</camunda.version>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
+		<java.version>21</java.version>
+
+		
+		<!-- docker repository in your local, if you have a local docker
+		registry -->
+		<!--
+		<jkube.docker.push.registry>localhost:5000/</jkube.docker.push.registry> -->
+		<jkube.docker.push.registry></jkube.docker.push.registry>
+
+		<!-- ingress will be generated if you make this as true. Note: you need
+		ingress controller
+		in local k8s -->
+		<jkube.createExternalUrls>false</jkube.createExternalUrls>
+
+		<!-- If you want to generate ingress, this property will be used. Set it
+		to your local ing
+		controller host -->
+		<jkube.domain>127.0.0.1.nip.io</jkube.domain>
 	</properties>
 
 	<dependencyManagement>
@@ -51,6 +70,16 @@
 			<artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
 		</dependency>
 
+<!-- 
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-config</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.security</groupId>
+	<artifactId>spring-security-oauth2-resource-server</artifactId>
+</dependency> -->
+
 		<dependency>
 			<groupId>org.camunda.bpm</groupId>
 			<artifactId>camunda-engine-plugin-spin</artifactId>
@@ -75,7 +104,21 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
+    
+	<dependency>
+	  <groupId>org.postgresql</groupId>
+	  <artifactId>postgresql</artifactId>
+	  <version>42.7.5</version>
+	</dependency>
 
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -114,12 +157,120 @@
 		</dependency>
 	</dependencies>
 
+
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>3.2.2</version>
+				<version>3.2.4</version>
+				<configuration>
+					<layout>ZIP</layout>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.eclipse.jkube</groupId>
+				<artifactId>kubernetes-maven-plugin</artifactId>
+				<version>1.17.0</version>
+				<configuration>
+					<resources>
+						<serviceAccount>force-sa</serviceAccount>
+						<annotations>
+							<ingress>
+								<property>
+									<name>kubernetes.io/ingress.class</name>
+									<value>nginx</value>
+								</property>
+								<property>
+									<name>nginx.ingress.kubernetes.io/use-regex</name>
+									<value>true</value>
+								</property>
+								<property>
+									<name>
+										nginx.ingress.kubernetes.io/rewrite-target</name>
+									<value>/$2</value>
+								</property>
+							</ingress>
+						</annotations>
+						<ingress>
+							<ingressRules>
+								<ingressRule>
+									<host>${project.artifactId}.${jkube.domain}</host>
+									<paths>
+										<path>
+											<pathType>Prefix</pathType>
+											<path>
+												/${project.artifactId}(/|$)(.*)</path>
+											<serviceName>${project.artifactId}</serviceName>
+											<servicePort>8080</servicePort>
+										</path>
+									</paths>
+								</ingressRule>
+							</ingressRules>
+						</ingress>
+						<controller>
+							<env>
+								<SPRING_PROFILES_ACTIVE>aws</SPRING_PROFILES_ACTIVE>
+							</env>
+							<controllerName>${project.artifactId}</controllerName>
+							<containerPrivileged>false</containerPrivileged>
+							<imagePullPolicy>Always</imagePullPolicy>
+							<replicas>2</replicas>
+							<containerResources>
+								<requests>
+									<memory>512Mi</memory>
+									<cpu>100m</cpu>
+								</requests>
+								<limits>
+									<memory>2Gi</memory>
+									<cpu>500m</cpu>
+								</limits>
+							</containerResources>
+						</controller>
+					</resources>
+					<enricher>
+						<config>
+							<jkube-healthcheck-spring-boot>
+								<timeoutSeconds>5</timeoutSeconds>
+								<readinessProbeInitialDelaySeconds>30</readinessProbeInitialDelaySeconds>
+								<livenessProbeInitialDelaySeconds>180</livenessProbeInitialDelaySeconds>
+								<failureThreshold>3</failureThreshold>
+								<successThreshold>1</successThreshold>
+							</jkube-healthcheck-spring-boot>
+							<jkube-service>
+								<name>${project.artifactId}</name>
+								<type>ClusterIP</type>
+								<port>8080</port>
+							</jkube-service>
+						</config>
+					</enricher>
+					<images>
+						<image>
+							<alias>${project.artifactId}</alias>
+							<name>
+								${jkube.docker.push.registry}force/${project.artifactId}:${project.version}</name>
+							<build>
+								<dockerFile>${project.basedir}/Dockerfile</dockerFile>
+								<assembly>
+									<name>target</name>
+								</assembly>
+							</build>
+						</image>
+					</images>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

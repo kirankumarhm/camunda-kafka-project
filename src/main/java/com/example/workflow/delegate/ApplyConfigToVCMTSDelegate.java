@@ -9,6 +9,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.workflow.model.Message;
 import com.example.workflow.service.KafkaProducerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
