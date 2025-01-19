@@ -77,6 +77,35 @@ runtimeService.createMessageCorrelation(compositeID)
         .correlate();
 ```
 
+## Problem Statement
+You have a Camunda Spring Boot application that connects to a PostgreSQL database and is deployed on Kubernetes. When scaling the application to multiple replicas, you encountered an issue where accessing the Camunda Cockpit resulted in a 401 Unauthorized error. The error was observed in the browser console as:
+
+```
+http://localhost:8080/camunda/api/engine/engine/default/case-definition/count?latestVersion=true 401 (Unauthorized)
+```
+
+### Solution
+The issue was resolved by introducing Redis for session management to handle the state across multiple replicas. The following steps were taken:
+
+1. Added Dependencies:
+
+* spring-session-data-redis
+* spring-boot-starter-data-redis
+
+2. Configured application.yaml:
+
+* Set up Redis as the session store.
+* Enabled Camunda authorization.
+
+3. Updated Kubernetes Deployment:
+
+* Configured the deployment and service for the Spring Boot application.
+* Deployed Redis and configured it as a service.
+* Enabled session affinity in the service configuration to ensure sticky sessions.
+
+Relevant Configuration Excerpt
+From kubernetes.yaml:
+
 Dependencies
 Spring Session Data Redis: This dependency provides support for managing HTTP session state using Redis.
 
