@@ -76,3 +76,116 @@ runtimeService.createMessageCorrelation(compositeID)
         .setVariable("correlatedPayload", msg.getPayload())
         .correlate();
 ```
+
+Dependencies
+Spring Session Data Redis: This dependency provides support for managing HTTP session state using Redis.
+
+```
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+```
+
+Documentation: Spring Session Data Redis
+
+Spring Boot Starter Data Redis: This dependency provides auto-configuration for Redis, including connection settings and RedisTemplate.
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+Documentation: Spring Boot Redis
+
+### Configuration
+#### application.yaml: This configuration file sets up Redis as the session store and enables Camunda authorization.
+```
+spring:
+  redis:
+    host: redis
+    port: 6379
+  session:
+    store-type: redis
+camunda:
+  bpm:
+    webapp:
+      index-redirect-enabled: true
+    authorization:
+      enabled: true
+```
+Documentation: Spring Session Configuration
+
+Kubernetes Deployment: This configuration sets up the deployment and service for your Spring Boot application and Redis.
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spring-app
+  template:
+    metadata:
+      labels:
+        app: spring-app
+    spec:
+      containers:
+      - name: spring-app
+        image: your-docker-image
+        ports:
+        - containerPort: 8080
+        env:
+        - name: CAMUNDA_BPM_ADMIN_USER
+          value: test
+        - name: CAMUNDA_BPM_ADMIN_PASSWORD
+          value: test123
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: spring-app
+  ports:
+  - port: 8080
+    targetPort: 8080
+  sessionAffinity: ClientIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+```
+
