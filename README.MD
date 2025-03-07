@@ -28,6 +28,19 @@ To ensure that your BPMN file is deployed on both pods running the Camunda embed
 5. **Cluster Configuration**: Ensure that your EKS cluster is properly configured to handle the deployment and execution of BPMN files across multiple pods. This includes setting up appropriate load balancing and ensuring that the pods can communicate with the PostgreSQL database efficiently
 
 
+
+In your scenario, where you have two pods running a Camunda embedded Spring Boot application on EKS with a single PostgreSQL database, and a workflow instance is started by the first pod and is waiting at an Intermediate Message Catch Event, the message correlation will work seamlessly across both pods. Here's how it works:
+
+1. **Shared Database**: Since both pods are connected to the same PostgreSQL database, they share the same state and data. This means that any changes or updates made by one pod are immediately visible to the other pod.
+
+2. **Message Correlation**: When the message is received via the REST endpoint in the second pod, the correlation code will execute and look for the waiting execution in the shared database. The Camunda engine will find the execution that is waiting for the message, regardless of which pod it is running on.
+
+3. **Execution Continuation**: Once the message is correlated, the Camunda engine will continue the execution of the workflow instance from the Intermediate Message Catch Event. This continuation will happen in the pod where the workflow instance is currently running, which in this case is the first pod.
+
+4. **Cluster Configuration**: Camunda is designed to work in a clustered environment, and it handles message correlation and execution continuation across multiple nodes (pods) efficiently. The job executor and message correlation mechanisms are built to ensure that the workflow instances are processed correctly, even in a distributed setup.
+5. 
+Design and implement a Camunda workflow with a multi-instance task containing several sub-service tasks. One sub-service task publishes messages to a Kafka topic, including a composite ID (e.g., `wf_ID_sub_task_ID_12345`) derived from the workflow instance ID. The challenge is to efficiently and accurately route responses received from a separate Kafka topic back to the corresponding instance of the originating sub-service task, ensuring correct processing by a subsequent sub-service task.
+
 ### More Detailed
 
 Design and implement a Camunda workflow with a multi-instance task containing several sub-service tasks. One sub-service task publishes messages to a Kafka topic, including a composite ID (e.g., `wf_ID_sub_task_ID_12345`) derived from the workflow instance ID. The challenge is to efficiently and accurately route responses received from a separate Kafka topic back to the corresponding instance of the originating sub-service task, ensuring correct processing by a subsequent sub-service task.
