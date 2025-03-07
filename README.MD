@@ -4,6 +4,30 @@
 
 How can a Camunda workflow with a multi-instance task and multiple sub-service tasks reliably correlate Kafka responses to the correct instance of the originating sub-service task based on a composite ID?
 
+
+
+Configure below entries in the NGINX Ingress under annotations
+
+```nginx.ingress.kubernetes.io/affinity: cookie```  
+```nginx.ingress.kubernetes.io/affinity-mode: persistent```
+
+The property c```amunda.bpm.job-execution.enabled=true``` is used to enable the job executor in Camunda BPM. The job executor is responsible for executing background jobs, such as asynchronous continuations, timers, and other scheduled tasks. When this property is set to true, it ensures that the job executor is active and can process these jobs123.
+
+The property ```camunda.bpm.job-execution.deployment-aware=true ```makes the job executor deployment-aware. This means that the job executor will only execute jobs for the process definitions that are deployed on the same node. This is particularly useful in a clustered environment, where you have multiple nodes running the Camunda engine. By setting this property to true, you ensure that each node only processes jobs for the deployments it is aware of, which helps in balancing the load and avoiding conflicts
+
+To ensure that your BPMN file is deployed on both pods running the Camunda embedded Spring Boot application on EKS with a single PostgreSQL database, you can follow these steps:
+
+1. **Auto-Deployment on Application Startup**: Configure your Spring Boot application to automatically deploy BPMN files on startup. Place your BPMN files in the src/main/resources/bpmn directory and use the @EnableProcessApplication annotation in your Spring Boot application class. This will ensure that the BPMN files are deployed whenever the application starts on any pod.
+
+2. **Database Synchronization**: Since both pods are connected to a single PostgreSQL database, any deployment made by one pod will be reflected in the database and accessible by the other pod. This ensures that the BPMN files are synchronized across both pods.
+
+3. **Deployment-Aware Job Execution**: Ensure that the camunda.bpm.job-execution.deployment-aware=true property is set. This makes the job executor deployment-aware, meaning each pod will only execute jobs for the process definitions it is aware of.
+
+4. **Manual Deployment via REST API**: You can also deploy BPMN files manually using the Camunda REST API. This can be done by sending a POST request to the /deployment/create endpoint with the BPMN file. This approach ensures that the deployment is explicitly triggered and can be done from any pod.
+
+5. **Cluster Configuration**: Ensure that your EKS cluster is properly configured to handle the deployment and execution of BPMN files across multiple pods. This includes setting up appropriate load balancing and ensuring that the pods can communicate with the PostgreSQL database efficiently
+
+
 ### More Detailed
 
 Design and implement a Camunda workflow with a multi-instance task containing several sub-service tasks. One sub-service task publishes messages to a Kafka topic, including a composite ID (e.g., `wf_ID_sub_task_ID_12345`) derived from the workflow instance ID. The challenge is to efficiently and accurately route responses received from a separate Kafka topic back to the corresponding instance of the originating sub-service task, ensuring correct processing by a subsequent sub-service task.
